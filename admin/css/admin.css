@@ -1,0 +1,193 @@
+/* ==========================================================================
+   ReadMeWP — Admin styles
+   Covers: permissions meta box, viewer page
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Meta box — roles checklist
+   -------------------------------------------------------------------------- */
+.readmewp-meta-box {
+	font-size: 13px;
+}
+
+.readmewp-roles-list {
+	margin: 6px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.readmewp-roles-list li {
+	margin-bottom: 5px;
+}
+
+.readmewp-roles-list label {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Meta box — user search / selected users
+   -------------------------------------------------------------------------- */
+.readmewp-user-search-wrap {
+	position: relative;
+	margin-top: 6px;
+}
+
+#readmewp-user-search {
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.readmewp-suggestions {
+	position: absolute;
+	top: 100%;
+	left: 0;
+	right: 0;
+	z-index: 9999;
+	background: #fff;
+	border: 1px solid #c3c4c7;
+	border-top: none;
+	border-radius: 0 0 3px 3px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	max-height: 200px;
+	overflow-y: auto;
+	box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+
+.readmewp-suggestions li {
+	padding: 7px 10px;
+	cursor: pointer;
+	font-size: 13px;
+}
+
+.readmewp-suggestions li:hover,
+.readmewp-suggestions li.is-active {
+	background: #2271b1;
+	color: #fff;
+}
+
+.readmewp-selected-users {
+	margin: 10px 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.readmewp-selected-users li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 5px 8px;
+	background: #f0f6fc;
+	border: 1px solid #c3c4c7;
+	border-radius: 3px;
+	margin-bottom: 4px;
+	font-size: 13px;
+}
+
+.readmewp-remove-user {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #d63638;
+	font-size: 14px;
+	line-height: 1;
+	padding: 0 2px;
+	flex-shrink: 0;
+}
+
+.readmewp-remove-user:hover {
+	color: #a00;
+}
+
+/* --------------------------------------------------------------------------
+   Viewer page
+   -------------------------------------------------------------------------- */
+.readmewp-viewer {
+	max-width: 860px;
+}
+
+.readmewp-viewer__title {
+	border-bottom: 1px solid #dcdcde;
+	padding-bottom: 12px;
+	margin-bottom: 24px;
+	font-size: 1.8em;
+}
+
+.readmewp-viewer__body {
+	background: #fff;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 32px 40px;
+	line-height: 1.7;
+	font-size: 14px;
+	color: #1d2327;
+}
+
+/* Sensible typography inside the viewer body */
+.readmewp-viewer__body h1,
+.readmewp-viewer__body h2,
+.readmewp-viewer__body h3,
+.readmewp-viewer__body h4,
+.readmewp-viewer__body h5,
+.readmewp-viewer__body h6 {
+	margin-top: 1.4em;
+	margin-bottom: 0.5em;
+}
+
+.readmewp-viewer__body p {
+	margin-bottom: 1em;
+}
+
+.readmewp-viewer__body ul,
+.readmewp-viewer__body ol {
+	padding-left: 1.5em;
+	margin-bottom: 1em;
+}
+
+.readmewp-viewer__body img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin: 16px 0;
+}
+
+.readmewp-viewer__body a {
+	color: #2271b1;
+}
+
+.readmewp-viewer__body a:hover {
+	color: #135e96;
+}
+
+.readmewp-viewer__body blockquote {
+	border-left: 4px solid #dcdcde;
+	margin: 1em 0;
+	padding: 0.5em 1em;
+	color: #646970;
+}
+
+.readmewp-viewer__body pre,
+.readmewp-viewer__body code {
+	font-family: Consolas, "Courier New", monospace;
+	font-size: 13px;
+	background: #f6f7f7;
+	border: 1px solid #dcdcde;
+	border-radius: 3px;
+	padding: 2px 5px;
+}
+
+.readmewp-viewer__body pre {
+	padding: 16px;
+	overflow-x: auto;
+	line-height: 1.5;
+}
+
+.readmewp-viewer__body pre code {
+	border: none;
+	background: none;
+	padding: 0;
+}
