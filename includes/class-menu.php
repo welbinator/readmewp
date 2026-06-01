@@ -94,17 +94,39 @@ class Menu {
 			return;
 		}
 
+		// Admins see everything — no post__in restriction.
+		// This lets WP's Trash, Draft, and other status tabs work naturally.
+		if ( current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
 		$user_id     = get_current_user_id();
 		$permissions = new Permissions();
-		$readable    = $permissions->get_readable_posts( $user_id );
 
-		if ( empty( $readable ) ) {
+		// IDs of published READMEs this user has read permission on.
+		$readable     = $permissions->get_readable_posts( $user_id );
+		$readable_ids = wp_list_pluck( $readable, 'ID' );
+
+		// Also include posts this user authored, across all statuses.
+		// This ensures their own drafts appear on the "Mine" tab and their
+		// own trashed posts appear on the "Trash" tab.
+		$own_ids = get_posts( [
+			'post_type'      => Post_Type::SLUG,
+			'post_status'    => 'any',
+			'author'         => $user_id,
+			'posts_per_page' => -1,
+			'fields'         => 'ids',
+		] );
+
+		$allowed_ids = array_unique( array_merge( $readable_ids, (array) $own_ids ) );
+
+		if ( empty( $allowed_ids ) ) {
 			// No accessible READMEs — return an impossible ID so query yields nothing.
 			$query->set( 'post__in', [ 0 ] );
 			return;
 		}
 
-		$query->set( 'post__in', wp_list_pluck( $readable, 'ID' ) );
+		$query->set( 'post__in', $allowed_ids );
 	}
 
 	/**
@@ -123,13 +145,43 @@ class Menu {
 			return $actions;
 		}
 
-		$user_id  = get_current_user_id();
-		$is_admin = current_user_can( 'manage_options' );
-		$is_owner = Ownership::is_owner( $post->ID, $user_id );
+		$user_id    = get_current_user_id();
+		$is_admin   = current_user_can( 'manage_options' );
+		$is_owner   = Ownership::is_owner( $post->ID, $user_id );
+		$is_trashed = 'trash' === $post->post_status;
 
-		// Start fresh — rebuild row actions for all users so View is always present.
+		// Start fresh — rebuild row actions so View is always present where applicable.
 		$new_actions = [];
 
+		if ( $is_trashed ) {
+			// Trash tab: only admins and owners can restore / permanently delete.
+			if ( $is_admin || $is_owner ) {
+				$restore_url = wp_nonce_url(
+					admin_url( 'post.php?post=' . $post->ID . '&action=untrash' ),
+					'untrash-post_' . $post->ID
+				);
+				$new_actions['untrash'] = sprintf(
+					'<a href="%s">%s</a>',
+					esc_url( $restore_url ),
+					esc_html__( 'Restore', 'readmewp' )
+				);
+
+				$delete_url = wp_nonce_url(
+					admin_url( 'post.php?post=' . $post->ID . '&action=delete' ),
+					'delete-post_' . $post->ID
+				);
+				$new_actions['delete'] = sprintf(
+					'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
+					esc_url( $delete_url ),
+					esc_attr( sprintf( __( 'Permanently delete &#8220;%s&#8221;', 'readmewp' ), $post->post_title ) ),
+					esc_html__( 'Delete Permanently', 'readmewp' )
+				);
+			}
+			// No View link for trashed posts — the submenu page only exists for published posts.
+			return $new_actions;
+		}
+
+		// Non-trash: Edit + Trash for admins/owners, View for published posts.
 		if ( $is_admin || $is_owner ) {
 			$new_actions['edit'] = sprintf(
 				'<a href="%s">%s</a>',
@@ -148,7 +200,7 @@ class Menu {
 				esc_html__( 'Trash', 'readmewp' )
 			);
 
-			// Non-owning admins: also check owner-lock — if locked, downgrade to View only.
+			// Non-owning admins: check owner-lock — if locked, downgrade to View only.
 			if ( $is_admin && ! $is_owner ) {
 				$owner_only = (bool) get_post_meta( $post->ID, Ownership::META_OWNER_ONLY, true );
 				if ( $owner_only ) {
@@ -157,13 +209,16 @@ class Menu {
 			}
 		}
 
-		// Always show a View link.
-		$page_slug = self::MENU_SLUG . '-' . $post->ID;
-		$new_actions['view'] = sprintf(
-			'<a href="%s">%s</a>',
-			esc_url( admin_url( 'admin.php?page=' . $page_slug ) ),
-			esc_html__( 'View', 'readmewp' )
-		);
+		// View link only makes sense for published posts — the submenu page only
+		// exists for published READMEs and is what the viewer route resolves to.
+		if ( 'publish' === $post->post_status ) {
+			$page_slug = self::MENU_SLUG . '-' . $post->ID;
+			$new_actions['view'] = sprintf(
+				'<a href="%s">%s</a>',
+				esc_url( admin_url( 'admin.php?page=' . $page_slug ) ),
+				esc_html__( 'View', 'readmewp' )
+			);
+		}
 
 		return $new_actions;
 	}
