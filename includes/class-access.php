@@ -118,6 +118,33 @@ class Access {
 		}
 
 		// ---------------------------------------------------------------
+		// 3a. Grant list-screen access to any non-admin who can read at
+		//     least one README. Without edit_readmewps, WordPress redirects
+		//     the user away from edit.php?post_type=readmewp to the first
+		//     accessible submenu instead of showing the list.
+		//     We intentionally do NOT grant publish_readmewps here, so the
+		//     "Add New" button stays hidden for read-only users.
+		// ---------------------------------------------------------------
+		$needs_list_cap = false;
+		foreach ( $caps as $cap ) {
+			if ( 'edit_readmewps' === $cap ) {
+				$needs_list_cap = true;
+				break;
+			}
+		}
+
+		if ( $needs_list_cap && empty( $allcaps['edit_readmewps'] ) ) {
+			static $readable_cache = [];
+			if ( ! isset( $readable_cache[ $user_id ] ) ) {
+				$perms = new Permissions();
+				$readable_cache[ $user_id ] = ! empty( $perms->get_readable_posts( $user_id ) );
+			}
+			if ( $readable_cache[ $user_id ] ) {
+				$allcaps['edit_readmewps'] = true;
+			}
+		}
+
+		// ---------------------------------------------------------------
 		// 3. Grant creator caps to non-admins who are in the settings list.
 		// ---------------------------------------------------------------
 		$needs_creator_cap = false;
