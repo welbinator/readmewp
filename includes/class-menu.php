@@ -52,16 +52,6 @@ class Menu {
 		// pre_get_posts restricts what non-admins see on that screen.
 		$top_level_slug = 'edit.php?post_type=' . Post_Type::SLUG;
 
-		add_menu_page(
-			__( 'ReadMeWP', 'readmewp' ),
-			__( 'ReadMeWP', 'readmewp' ),
-			'read',
-			$top_level_slug,
-			'',
-			'dashicons-media-text',
-			3
-		);
-
 		// Add a submenu item per readable README.
 		foreach ( $readmes as $readme ) {
 			$page_slug = self::MENU_SLUG . '-' . $readme->ID;

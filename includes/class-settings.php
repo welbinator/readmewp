@@ -48,10 +48,9 @@ class Settings {
 	 * Add the Settings submenu under the ReadMeWP top-level menu.
 	 */
 	public function add_settings_page(): void {
-		add_submenu_page(
-			'edit.php?post_type=' . Post_Type::SLUG,
+		add_options_page(
 			__( 'ReadMeWP Settings', 'readmewp' ),
-			__( 'Settings', 'readmewp' ),
+			__( 'ReadMeWP', 'readmewp' ),
 			'manage_options',
 			self::PAGE_SLUG,
 			[ $this, 'render_page' ]
