@@ -1,3 +1,7 @@
 /vendor/
 /composer.lock
 wp-tests-config.php
+/node_modules/
+/tests/e2e/report/
+/playwright-report/
+/test-results/

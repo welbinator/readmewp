@@ -1,0 +1,29 @@
+{
+  "name": "readmewp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/welbinator/readmewp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/welbinator/readmewp/issues"
+  },
+  "homepage": "https://github.com/welbinator/readmewp#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
