@@ -233,6 +233,11 @@ class Settings {
 		// Validate user IDs.
 		$users = array_values( array_filter( $users, static fn( $id ) => $id > 0 && get_user_by( 'ID', $id ) ) );
 
+		// C-01: Capture previous settings BEFORE update_option so we flush
+		// users who were removed from the list, not just those who are still in it.
+		$prev_settings = self::get();
+		$prev_users    = $prev_settings['allow_creator_users'] ?? [];
+
 		update_option( self::OPTION_KEY, [
 			'allow_creator_roles' => $roles,
 			'allow_creator_users' => $users,
@@ -243,9 +248,7 @@ class Settings {
 		foreach ( $users as $uid ) {
 			clean_user_cache( $uid );
 		}
-		// Also bust any users who were previously in the list but just removed.
-		$prev_settings = self::get();
-		$prev_users    = $prev_settings['allow_creator_users'] ?? [];
+		// Bust caches for users who were just removed from the list.
 		foreach ( $prev_users as $uid ) {
 			clean_user_cache( (int) $uid );
 		}
@@ -269,7 +272,10 @@ class Settings {
 			wp_send_json_error( [], 403 );
 		}
 
-		$term = isset( $_GET['term'] ) ? sanitize_text_field( wp_unslash( $_GET['term'] ) ) : '';
+		// J-01 (PHP side): Read term from POST — JS was changed to $.post, so the
+		// parameter arrives in $_POST. Fall back to $_GET for backward compatibility.
+		$raw_term = $_POST['term'] ?? $_GET['term'] ?? '';
+		$term     = sanitize_text_field( wp_unslash( $raw_term ) );
 		if ( strlen( $term ) < 2 ) {
 			wp_send_json_success( [] );
 		}

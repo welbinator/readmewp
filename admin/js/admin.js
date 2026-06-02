@@ -25,7 +25,9 @@
 		}
 
 		searchTimer = setTimeout( function () {
-			$.get( ReadMeWP.ajaxUrl, {
+			// J-01: Use $.post (not $.get) so the search term isn't logged in
+			// server access logs as a query-string parameter.
+			$.post( ReadMeWP.ajaxUrl, {
 				action : 'readmewp_user_search',
 				nonce  : ReadMeWP.nonce,
 				term   : term,
@@ -39,14 +41,20 @@
 					}
 
 					response.data.forEach( function ( user ) {
+						// J-03: Guard against missing/non-numeric user.id before
+						// using it in a selector — prevents selector-injection.
+						const uid = parseInt( user.id, 10 );
+						if ( ! uid ) {
+							return;
+						}
 						// Skip already-selected users.
-						if ( $selected.find( '[data-user-id="' + user.id + '"]' ).length ) {
+						if ( $selected.find( '[data-user-id="' + uid + '"]' ).length ) {
 							return;
 						}
 						$suggestions.append(
 							$( '<li>' )
 								.text( user.label )
-								.data( 'user', user )
+								.data( 'user', { id: uid, label: user.label } )
 						);
 					} );
 
@@ -55,6 +63,13 @@
 					} else {
 						$suggestions.hide();
 					}
+				} )
+				// J-02: Surface AJAX failures (expired nonce, server error) so
+				// they don't silently vanish in the UI.
+				.fail( function () {
+					$suggestions.hide().empty();
+					// eslint-disable-next-line no-console
+					console.warn( 'ReadMeWP: user search request failed. The nonce may have expired — try reloading the page.' );
 				} );
 		}, 250 );
 	} );

@@ -43,7 +43,9 @@ class Viewer {
 			return;
 		}
 
-		$post_id = (int) str_replace( Menu::MENU_SLUG . '-', '', $page );
+		// C-02: Use substr (not str_replace) so only the leading prefix is stripped,
+		// not every occurrence of the slug within the string.
+		$post_id = (int) substr( $page, strlen( Menu::MENU_SLUG . '-' ) );
 		if ( $post_id <= 0 ) {
 			return;
 		}
@@ -107,7 +109,11 @@ class Viewer {
 
 			<h1 class="readmewp-viewer__title">
 				<?php echo esc_html( $readme->post_title ); ?>
-				<?php if ( current_user_can( 'manage_options' ) || Ownership::is_owner( $readme->ID, get_current_user_id() ) ) : ?>
+				<?php
+			// C-03: Only show Edit link when the user can actually edit this post
+			// (respects owner-lock — non-owning admins won't see the button on locked READMEs).
+			if ( current_user_can( 'edit_post', $readme->ID ) ) :
+			?>
 					<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $readme->ID . '&action=edit' ) ); ?>"
 					   class="page-title-action readmewp-edit-link">
 						<?php esc_html_e( 'Edit', 'readmewp' ); ?>

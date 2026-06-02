@@ -26,6 +26,9 @@ class Post_Type {
 	 */
 	public function register(): void {
 		add_action( 'init', [ $this, 'register_post_type' ] );
+		// S-01: Gate REST API collection and single-item reads on Permissions::user_can_read().
+		add_filter( 'rest_readmewp_query',   [ $this, 'rest_restrict_collection' ], 10, 2 );
+		add_filter( 'rest_prepare_readmewp', [ $this, 'rest_prepare_item' ],        10, 3 );
 	}
 
 	/**
@@ -65,5 +68,55 @@ class Post_Type {
 		];
 
 		register_post_type( self::SLUG, $args );
+	}
+
+	// -------------------------------------------------------------------------
+	// REST API permission guards (S-01)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Restrict REST collection queries to posts the current user may read.
+	 *
+	 * Without this, any user who has `edit_readmewps` (granted so the admin
+	 * list screen works) could enumerate all READMEs via the REST endpoint.
+	 *
+	 * @param array            $args    WP_Query args built by the REST controller.
+	 * @param \WP_REST_Request $request Current REST request.
+	 * @return array
+	 */
+	public function rest_restrict_collection( array $args, \WP_REST_Request $request ): array {
+		$user_id = get_current_user_id();
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return $args; // Admins see everything.
+		}
+		$permissions = new Permissions();
+		$readable    = wp_list_pluck( $permissions->get_readable_posts( $user_id ), 'ID' );
+		// Force an empty result if nothing is readable.
+		$args['post__in'] = empty( $readable ) ? [ 0 ] : $readable;
+		return $args;
+	}
+
+	/**
+	 * Block REST single-item reads for posts the current user may not read.
+	 *
+	 * @param \WP_REST_Response|\WP_Error $response REST response.
+	 * @param \WP_Post                   $post      The README post.
+	 * @param \WP_REST_Request           $request   Current REST request.
+	 * @return \WP_REST_Response|\WP_Error
+	 */
+	public function rest_prepare_item( $response, \WP_Post $post, \WP_REST_Request $request ) {
+		$user_id = get_current_user_id();
+		if ( user_can( $user_id, 'manage_options' ) ) {
+			return $response;
+		}
+		$permissions = new Permissions();
+		if ( ! $permissions->user_can_read( $post->ID, $user_id ) ) {
+			return new \WP_Error(
+				'rest_cannot_read',
+				__( 'You do not have permission to view this README.', 'readmewp' ),
+				[ 'status' => 403 ]
+			);
+		}
+		return $response;
 	}
 }

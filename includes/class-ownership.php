@@ -117,6 +117,11 @@ class Ownership {
 			return;
 		}
 
+		// A-01: Capability check — only the owner or an admin may change ownership meta.
+		if ( ! current_user_can( 'manage_options' ) && ! Ownership::is_owner( $post_id, get_current_user_id() ) ) {
+			return;
+		}
+
 		// Set owner ID on first save; never overwrite after that.
 		$existing_owner = get_post_meta( $post_id, self::META_OWNER_ID, true );
 		if ( ! $existing_owner ) {
