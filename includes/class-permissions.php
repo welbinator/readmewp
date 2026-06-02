@@ -40,8 +40,8 @@ class Permissions {
 	 * Hook into WordPress.
 	 */
 	public function register(): void {
-		add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
-		add_action( 'save_post_' . Post_Type::SLUG, [ $this, 'save_meta' ], 10, 2 );
+		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+		add_action( 'save_post_' . Post_Type::SLUG, array( $this, 'save_meta' ), 10, 2 );
 	}
 
 	/**
@@ -51,7 +51,7 @@ class Permissions {
 		add_meta_box(
 			'readmewp_permissions',
 			__( 'Who Can Read This README?', 'readmewp' ),
-			[ $this, 'render_meta_box' ],
+			array( $this, 'render_meta_box' ),
 			Post_Type::SLUG,
 			'side',
 			'high'
@@ -119,9 +119,12 @@ class Permissions {
 			</div>
 
 			<ul id="readmewp-selected-users" class="readmewp-selected-users">
-				<?php foreach ( $saved_users as $user_id ) :
+				<?php
+				foreach ( $saved_users as $user_id ) :
 					$user = get_userdata( $user_id );
-					if ( ! $user ) continue;
+					if ( ! $user ) {
+						continue;
+					}
 					?>
 					<li data-user-id="<?php echo esc_attr( (string) $user_id ); ?>">
 						<span class="readmewp-user-label">
@@ -165,9 +168,10 @@ class Permissions {
 		}
 
 		// --- Save roles ---
-		$raw_roles    = isset( $_POST['readmewp_roles'] ) ? (array) $_POST['readmewp_roles'] : [];
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$raw_roles      = isset( $_POST['readmewp_roles'] ) ? array_map( 'wp_unslash', (array) $_POST['readmewp_roles'] ) : array();
 		$all_role_slugs = array_keys( $this->get_all_roles() );
-		$clean_roles  = array_values(
+		$clean_roles    = array_values(
 			array_intersect(
 				array_map( 'sanitize_key', $raw_roles ),
 				$all_role_slugs
@@ -176,7 +180,8 @@ class Permissions {
 		update_post_meta( $post_id, self::META_ROLES, $clean_roles );
 
 		// --- Save users ---
-		$raw_users   = isset( $_POST['readmewp_users'] ) ? (array) $_POST['readmewp_users'] : [];
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$raw_users   = isset( $_POST['readmewp_users'] ) ? array_map( 'wp_unslash', (array) $_POST['readmewp_users'] ) : array();
 		$clean_users = array_values(
 			array_filter(
 				array_map( 'absint', $raw_users ),
@@ -241,13 +246,15 @@ class Permissions {
 	 * @return \WP_Post[]
 	 */
 	public function get_readable_posts( int $user_id ): array {
-		$posts = get_posts( [
-			'post_type'      => Post_Type::SLUG,
-			'post_status'    => 'publish',
-			'posts_per_page' => -1,
-			'orderby'        => 'title',
-			'order'          => 'ASC',
-		] );
+		$posts = get_posts(
+			array(
+				'post_type'      => Post_Type::SLUG,
+				'post_status'    => 'publish',
+				'posts_per_page' => -1,
+				'orderby'        => 'title',
+				'order'          => 'ASC',
+			)
+		);
 
 		return array_values(
 			array_filter(
@@ -269,7 +276,7 @@ class Permissions {
 	 */
 	private function get_allowed_roles( int $post_id ): array {
 		$value = get_post_meta( $post_id, self::META_ROLES, true );
-		return is_array( $value ) ? $value : [];
+		return is_array( $value ) ? $value : array();
 	}
 
 	/**
@@ -281,7 +288,7 @@ class Permissions {
 	private function get_allowed_users( int $post_id ): array {
 		$value = get_post_meta( $post_id, self::META_USERS, true );
 		if ( ! is_array( $value ) ) {
-			return [];
+			return array();
 		}
 		return array_map( 'intval', $value );
 	}
@@ -293,7 +300,7 @@ class Permissions {
 	 */
 	private function get_all_roles(): array {
 		global $wp_roles;
-		$roles = [];
+		$roles = array();
 		foreach ( $wp_roles->roles as $slug => $data ) {
 			$roles[ $slug ] = translate_user_role( $data['name'] );
 		}

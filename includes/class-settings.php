@@ -33,11 +33,11 @@ class Settings {
 	 * Hook into WordPress.
 	 */
 	public function register(): void {
-		add_action( 'admin_menu',    [ $this, 'add_settings_page' ] );
-		add_action( 'admin_init',    [ $this, 'handle_save' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'admin_menu', array( $this, 'add_settings_page' ) );
+		add_action( 'admin_init', array( $this, 'handle_save' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 		// AJAX user search (shared with Permissions meta box).
-		add_action( 'wp_ajax_readmewp_user_search', [ $this, 'ajax_user_search' ] );
+		add_action( 'wp_ajax_readmewp_user_search', array( $this, 'ajax_user_search' ) );
 	}
 
 	// -------------------------------------------------------------------------
@@ -53,7 +53,7 @@ class Settings {
 			__( 'ReadMeWP', 'readmewp' ),
 			'manage_options',
 			self::PAGE_SLUG,
-			[ $this, 'render_page' ]
+			array( $this, 'render_page' )
 		);
 	}
 
@@ -78,25 +78,29 @@ class Settings {
 		wp_enqueue_style(
 			'readmewp-admin',
 			READMEWP_URL . 'admin/css/admin.css',
-			[],
+			array(),
 			READMEWP_VERSION
 		);
 
 		wp_enqueue_script(
 			'readmewp-admin',
 			READMEWP_URL . 'admin/js/admin.js',
-			[ 'jquery' ],
+			array( 'jquery' ),
 			READMEWP_VERSION,
 			true
 		);
 
-		wp_localize_script( 'readmewp-admin', 'ReadMeWP', [
-			'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-			'nonce'   => wp_create_nonce( 'readmewp_user_search' ),
-			'strings' => [
-				'remove' => __( 'Remove', 'readmewp' ),
-			],
-		] );
+		wp_localize_script(
+			'readmewp-admin',
+			'ReadMeWP',
+			array(
+				'ajaxUrl' => admin_url( 'admin-ajax.php' ),
+				'nonce'   => wp_create_nonce( 'readmewp_user_search' ),
+				'strings' => array(
+					'remove' => __( 'Remove', 'readmewp' ),
+				),
+			)
+		);
 	}
 
 	// -------------------------------------------------------------------------
@@ -111,11 +115,11 @@ class Settings {
 			wp_die( esc_html__( 'You do not have permission to access this page.', 'readmewp' ) );
 		}
 
-		$settings       = self::get();
-		$creator_roles  = $settings['allow_creator_roles'] ?? [];
-		$creator_users  = $settings['allow_creator_users'] ?? [];
-		$creators_on    = ! empty( $creator_roles ) || ! empty( $creator_users );
-		$all_roles      = $this->get_all_roles();
+		$settings      = self::get();
+		$creator_roles = $settings['allow_creator_roles'] ?? array();
+		$creator_users = $settings['allow_creator_users'] ?? array();
+		$creators_on   = ! empty( $creator_roles ) || ! empty( $creator_users );
+		$all_roles     = $this->get_all_roles();
 		?>
 		<div class="wrap">
 			<h1><?php esc_html_e( 'ReadMeWP Settings', 'readmewp' ); ?></h1>
@@ -141,7 +145,10 @@ class Settings {
 						<td>
 							<ul class="readmewp-roles-list">
 								<?php foreach ( $all_roles as $slug => $name ) : ?>
-									<?php if ( 'administrator' === $slug ) continue; ?>
+									<?php
+									if ( 'administrator' === $slug ) {
+										continue;}
+									?>
 									<li>
 										<label>
 											<input
@@ -172,9 +179,12 @@ class Settings {
 							</div>
 
 							<ul id="readmewp-selected-users" class="readmewp-selected-users">
-								<?php foreach ( $creator_users as $uid ) :
+								<?php
+								foreach ( $creator_users as $uid ) :
 									$u = get_userdata( (int) $uid );
-									if ( ! $u ) continue;
+									if ( ! $u ) {
+										continue;
+									}
 									?>
 									<li data-user-id="<?php echo esc_attr( (string) $uid ); ?>">
 										<span class="readmewp-user-label">
@@ -220,11 +230,11 @@ class Settings {
 
 		$roles = isset( $_POST['readmewp_creator_roles'] )
 			? array_map( 'sanitize_text_field', (array) wp_unslash( $_POST['readmewp_creator_roles'] ) )
-			: [];
+			: array();
 
 		$users = isset( $_POST['readmewp_creator_users'] )
 			? array_map( 'intval', (array) wp_unslash( $_POST['readmewp_creator_users'] ) )
-			: [];
+			: array();
 
 		// Validate roles against real WP roles.
 		$valid_roles = array_keys( wp_roles()->roles );
@@ -236,12 +246,15 @@ class Settings {
 		// C-01: Capture previous settings BEFORE update_option so we flush
 		// users who were removed from the list, not just those who are still in it.
 		$prev_settings = self::get();
-		$prev_users    = $prev_settings['allow_creator_users'] ?? [];
+		$prev_users    = $prev_settings['allow_creator_users'] ?? array();
 
-		update_option( self::OPTION_KEY, [
-			'allow_creator_roles' => $roles,
-			'allow_creator_users' => $users,
-		] );
+		update_option(
+			self::OPTION_KEY,
+			array(
+				'allow_creator_roles' => $roles,
+				'allow_creator_users' => $users,
+			)
+		);
 
 		// Bust user capability caches for anyone listed so the change
 		// takes effect immediately without waiting for a new session.
@@ -253,7 +266,8 @@ class Settings {
 			clean_user_cache( (int) $uid );
 		}
 
-		wp_safe_redirect( add_query_arg( 'readmewp_saved', '1', wp_get_referer() ?: self::settings_url() ) );
+		$redirect_url = wp_get_referer() ? wp_get_referer() : self::settings_url();
+		wp_safe_redirect( add_query_arg( 'readmewp_saved', '1', $redirect_url ) );
 		exit;
 	}
 
@@ -269,28 +283,34 @@ class Settings {
 		check_ajax_referer( 'readmewp_user_search', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( [], 403 );
+			wp_send_json_error( array(), 403 );
 		}
 
 		// J-01 (PHP side): Read term from POST — JS was changed to $.post, so the
 		// parameter arrives in $_POST. Fall back to $_GET for backward compatibility.
-		$raw_term = $_POST['term'] ?? $_GET['term'] ?? '';
-		$term     = sanitize_text_field( wp_unslash( $raw_term ) );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$raw_term = isset( $_POST['term'] ) ? $_POST['term'] : ( isset( $_GET['term'] ) ? $_GET['term'] : '' ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized,WordPress.Security.ValidatedSanitizedInput.MissingUnslash
+		$term     = sanitize_text_field( wp_unslash( (string) $raw_term ) );
 		if ( strlen( $term ) < 2 ) {
-			wp_send_json_success( [] );
+			wp_send_json_success( array() );
 		}
 
-		$users = get_users( [
-			'search'         => '*' . $term . '*',
-			'search_columns' => [ 'display_name', 'user_email', 'user_login' ],
-			'number'         => 10,
-			'fields'         => [ 'ID', 'display_name', 'user_email' ],
-		] );
+		$users = get_users(
+			array(
+				'search'         => '*' . $term . '*',
+				'search_columns' => array( 'display_name', 'user_email', 'user_login' ),
+				'number'         => 10,
+				'fields'         => array( 'ID', 'display_name', 'user_email' ),
+			)
+		);
 
-		$results = array_map( static fn( $u ) => [
-			'id'    => (int) $u->ID,
-			'label' => $u->display_name . ' (' . $u->user_email . ')',
-		], $users );
+		$results = array_map(
+			static fn( $u ) => array(
+				'id'    => (int) $u->ID,
+				'label' => $u->display_name . ' (' . $u->user_email . ')',
+			),
+			$users
+		);
 
 		wp_send_json_success( $results );
 	}
@@ -305,11 +325,11 @@ class Settings {
 	 * @return array{allow_creator_roles: string[], allow_creator_users: int[]}
 	 */
 	public static function get(): array {
-		$defaults = [
-			'allow_creator_roles' => [],
-			'allow_creator_users' => [],
-		];
-		return wp_parse_args( get_option( self::OPTION_KEY, [] ), $defaults );
+		$defaults = array(
+			'allow_creator_roles' => array(),
+			'allow_creator_users' => array(),
+		);
+		return wp_parse_args( get_option( self::OPTION_KEY, array() ), $defaults );
 	}
 
 	/**
@@ -348,7 +368,10 @@ class Settings {
 	 */
 	public static function settings_url(): string {
 		return add_query_arg(
-			[ 'post_type' => Post_Type::SLUG, 'page' => self::PAGE_SLUG ],
+			array(
+				'post_type' => Post_Type::SLUG,
+				'page'      => self::PAGE_SLUG,
+			),
 			admin_url( 'edit.php' )
 		);
 	}
@@ -358,11 +381,13 @@ class Settings {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Get all registered WordPress roles.
+	 *
 	 * @return array<string, string>
 	 */
 	private function get_all_roles(): array {
 		global $wp_roles;
-		$roles = [];
+		$roles = array();
 		foreach ( $wp_roles->roles as $slug => $data ) {
 			$roles[ $slug ] = translate_user_role( $data['name'] );
 		}

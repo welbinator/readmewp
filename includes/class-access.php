@@ -37,19 +37,19 @@ class Access {
 	/**
 	 * Primitive caps we grant to allowed creators.
 	 */
-	private const CREATOR_CAPS = [
+	private const CREATOR_CAPS = array(
 		'edit_readmewps',
 		'publish_readmewps',
-	];
+	);
 
 	/**
 	 * Hook into WordPress.
 	 */
 	public function register(): void {
 		// Grant CPT caps to admins (they have no native readmewp* caps).
-		add_filter( 'user_has_cap', [ $this, 'grant_admin_caps' ], 5, 4 );
+		add_filter( 'user_has_cap', array( $this, 'grant_admin_caps' ), 5, 4 );
 		// Apply owner lock and creator grants after WP's own meta cap mapping.
-		add_filter( 'user_has_cap', [ $this, 'filter_caps' ], 20, 4 );
+		add_filter( 'user_has_cap', array( $this, 'filter_caps' ), 20, 4 );
 	}
 
 	/**
@@ -99,7 +99,7 @@ class Access {
 			if (
 				$post &&
 				Post_Type::SLUG === $post->post_type &&
-				in_array( $requested, [ 'edit_post', 'delete_post' ], true ) &&
+				in_array( $requested, array( 'edit_post', 'delete_post' ), true ) &&
 				Ownership::is_owner_only( $post_id ) &&
 				! Ownership::is_owner( $post_id, $user_id )
 			) {
@@ -119,11 +119,11 @@ class Access {
 
 		// ---------------------------------------------------------------
 		// 3a. Grant list-screen access to any non-admin who can read at
-		//     least one README. Without edit_readmewps, WordPress redirects
-		//     the user away from edit.php?post_type=readmewp to the first
-		//     accessible submenu instead of showing the list.
-		//     We intentionally do NOT grant publish_readmewps here, so the
-		//     "Add New" button stays hidden for read-only users.
+		// least one README. Without edit_readmewps, WordPress redirects
+		// the user away from edit.php?post_type=readmewp to the first
+		// accessible submenu instead of showing the list.
+		// We intentionally do NOT grant publish_readmewps here, so the
+		// "Add New" button stays hidden for read-only users.
 		// ---------------------------------------------------------------
 		$needs_list_cap = false;
 		foreach ( $caps as $cap ) {
@@ -134,9 +134,9 @@ class Access {
 		}
 
 		if ( $needs_list_cap && empty( $allcaps['edit_readmewps'] ) ) {
-			static $readable_cache = [];
+			static $readable_cache = array();
 			if ( ! isset( $readable_cache[ $user_id ] ) ) {
-				$perms = new Permissions();
+				$perms                      = new Permissions();
 				$readable_cache[ $user_id ] = ! empty( $perms->get_readable_posts( $user_id ) );
 			}
 			if ( $readable_cache[ $user_id ] ) {
@@ -165,9 +165,9 @@ class Access {
 
 		// ---------------------------------------------------------------
 		// 4. Always allow a non-admin to edit/delete their own READMEs,
-		//    regardless of whether they're still in the settings list.
-		//    Ownership is permanent — losing create access doesn't lock
-		//    someone out of posts they already wrote.
+		// regardless of whether they're still in the settings list.
+		// Ownership is permanent — losing create access doesn't lock
+		// someone out of posts they already wrote.
 		// ---------------------------------------------------------------
 		if ( $post_id > 0 ) {
 			$post = get_post( $post_id );
@@ -177,7 +177,7 @@ class Access {
 				Ownership::is_owner( $post_id, $user_id )
 			) {
 				// Grant any readmewp-related primitive cap (covers edit_readmewps,
-				// edit_published_readmewps, delete_readmewps, delete_published_readmewps, etc.)
+				// edit_published_readmewps, delete_readmewps, delete_published_readmewps, etc.
 				foreach ( $caps as $cap ) {
 					if ( str_contains( $cap, 'readmewp' ) ) {
 						$allcaps[ $cap ] = true;

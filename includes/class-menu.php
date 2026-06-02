@@ -28,9 +28,9 @@ class Menu {
 	 * Hook into WordPress.
 	 */
 	public function register(): void {
-		add_action( 'admin_menu', [ $this, 'build_menu' ] );
-		add_action( 'pre_get_posts', [ $this, 'filter_list_screen' ] );
-		add_filter( 'post_row_actions', [ $this, 'row_actions' ], 10, 2 );
+		add_action( 'admin_menu', array( $this, 'build_menu' ) );
+		add_action( 'pre_get_posts', array( $this, 'filter_list_screen' ) );
+		add_filter( 'post_row_actions', array( $this, 'row_actions' ), 10, 2 );
 	}
 
 	/**
@@ -110,19 +110,21 @@ class Menu {
 		// Also include posts this user authored, across all statuses.
 		// This ensures their own drafts appear on the "Mine" tab and their
 		// own trashed posts appear on the "Trash" tab.
-		$own_ids = get_posts( [
-			'post_type'      => Post_Type::SLUG,
-			'post_status'    => 'any',
-			'author'         => $user_id,
-			'posts_per_page' => -1,
-			'fields'         => 'ids',
-		] );
+		$own_ids = get_posts(
+			array(
+				'post_type'      => Post_Type::SLUG,
+				'post_status'    => 'any',
+				'author'         => $user_id,
+				'posts_per_page' => -1,
+				'fields'         => 'ids',
+			)
+		);
 
 		$allowed_ids = array_unique( array_merge( $readable_ids, (array) $own_ids ) );
 
 		if ( empty( $allowed_ids ) ) {
 			// No accessible READMEs — return an impossible ID so query yields nothing.
-			$query->set( 'post__in', [ 0 ] );
+			$query->set( 'post__in', array( 0 ) );
 			return;
 		}
 
@@ -151,12 +153,12 @@ class Menu {
 		$is_trashed = 'trash' === $post->post_status;
 
 		// Start fresh — rebuild row actions so View is always present where applicable.
-		$new_actions = [];
+		$new_actions = array();
 
 		if ( $is_trashed ) {
 			// Trash tab: only admins and owners can restore / permanently delete.
 			if ( $is_admin || $is_owner ) {
-				$restore_url = wp_nonce_url(
+				$restore_url            = wp_nonce_url(
 					admin_url( 'post.php?post=' . $post->ID . '&action=untrash' ),
 					'untrash-post_' . $post->ID
 				);
@@ -166,13 +168,14 @@ class Menu {
 					esc_html__( 'Restore', 'readmewp' )
 				);
 
-				$delete_url = wp_nonce_url(
+				$delete_url            = wp_nonce_url(
 					admin_url( 'post.php?post=' . $post->ID . '&action=delete' ),
 					'delete-post_' . $post->ID
 				);
 				$new_actions['delete'] = sprintf(
 					'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
 					esc_url( $delete_url ),
+					// translators: %s is the README post title.
 					esc_attr( sprintf( __( 'Permanently delete &#8220;%s&#8221;', 'readmewp' ), $post->post_title ) ),
 					esc_html__( 'Delete Permanently', 'readmewp' )
 				);
@@ -189,13 +192,14 @@ class Menu {
 				esc_html__( 'Edit', 'readmewp' )
 			);
 
-			$trash_url = wp_nonce_url(
+			$trash_url            = wp_nonce_url(
 				admin_url( 'post.php?post=' . $post->ID . '&action=trash' ),
 				'trash-post_' . $post->ID
 			);
 			$new_actions['trash'] = sprintf(
 				'<a href="%s" class="submitdelete" aria-label="%s">%s</a>',
 				esc_url( $trash_url ),
+				// translators: %s is the README post title.
 				esc_attr( sprintf( __( 'Move &#8220;%s&#8221; to the Trash', 'readmewp' ), $post->post_title ) ),
 				esc_html__( 'Trash', 'readmewp' )
 			);
@@ -212,7 +216,7 @@ class Menu {
 		// View link only makes sense for published posts — the submenu page only
 		// exists for published READMEs and is what the viewer route resolves to.
 		if ( 'publish' === $post->post_status ) {
-			$page_slug = self::MENU_SLUG . '-' . $post->ID;
+			$page_slug           = self::MENU_SLUG . '-' . $post->ID;
 			$new_actions['view'] = sprintf(
 				'<a href="%s">%s</a>',
 				esc_url( admin_url( 'admin.php?page=' . $page_slug ) ),

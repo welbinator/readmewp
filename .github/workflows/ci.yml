@@ -10,6 +10,8 @@ jobs:
   phpunit:
     name: PHPUnit Tests (PHP ${{ matrix.php }})
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     strategy:
       matrix:
@@ -91,6 +93,8 @@ jobs:
   phpcs:
     name: PHP Code Sniffer (WordPress coding standards)
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
     steps:
       - name: Checkout code
@@ -104,18 +108,7 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies (with phpcs)
-        run: |
-          composer require --dev \
-            squizlabs/php_codesniffer \
-            wp-coding-standards/wpcs \
-            dealerdirect/phpcodesniffer-composer-installer \
-            --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist
 
       - name: Run PHPCS
-        run: |
-          ./vendor/bin/phpcs \
-            --standard=WordPress \
-            --extensions=php \
-            --ignore=vendor/,tests/ \
-            --report=checkstyle \
-            . | cs2pr
+        run: ./vendor/bin/phpcs --report=checkstyle | cs2pr

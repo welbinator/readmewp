@@ -7,6 +7,7 @@
 	<exclude-pattern>/vendor/</exclude-pattern>
 	<exclude-pattern>/node_modules/</exclude-pattern>
 	<exclude-pattern>/tests/</exclude-pattern>
+	<exclude-pattern>/wp-tests-config.php</exclude-pattern>
 
 	<!-- How to scan -->
 	<arg value="sp"/>
@@ -21,19 +22,43 @@
 
 	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
 		<properties>
-			<property name="prefixes" type="array" value="readmewp,ReadMeWP"/>
+			<property name="prefixes" type="array">
+				<element value="readmewp"/>
+				<element value="ReadMeWP"/>
+			</property>
 		</properties>
 	</rule>
 
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="readmewp"/>
+			<property name="text_domain" type="array">
+				<element value="readmewp"/>
+			</property>
 		</properties>
 	</rule>
 
 	<rule ref="WordPress.WhiteSpace.ControlStructureSpacing">
 		<properties>
 			<property name="blank_line_check" value="true"/>
+		</properties>
+	</rule>
+
+	<!-- Allow short array syntax [] — we target PHP 8.1+ where it is idiomatic. -->
+	<rule ref="Generic.Arrays.DisallowShortArraySyntax.Found">
+		<severity>0</severity>
+	</rule>
+
+	<!-- Register custom CPT caps so PHPCS doesn't flag them as unknown. -->
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="edit_readmewps"/>
+				<element value="edit_readmewp"/>
+				<element value="publish_readmewps"/>
+				<element value="delete_readmewps"/>
+				<element value="delete_readmewp"/>
+				<element value="read_readmewp"/>
+			</property>
 		</properties>
 	</rule>
 </ruleset>

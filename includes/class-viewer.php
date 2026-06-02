@@ -24,8 +24,8 @@ class Viewer {
 	 * Registers the access-guard for direct ?page=readmewp-{id} URL attempts.
 	 */
 	public function register(): void {
-		add_action( 'admin_init', [ $this, 'guard_direct_access' ] );
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
+		add_action( 'admin_init', array( $this, 'guard_direct_access' ) );
+		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 	}
 
 	/**
@@ -60,7 +60,10 @@ class Viewer {
 			wp_die(
 				esc_html__( 'You do not have permission to view this README.', 'readmewp' ),
 				esc_html__( 'Access Denied', 'readmewp' ),
-				[ 'response' => 403, 'back_link' => true ]
+				array(
+					'response'  => 403,
+					'back_link' => true,
+				)
 			);
 		}
 	}
@@ -83,7 +86,7 @@ class Viewer {
 			wp_enqueue_style(
 				'readmewp-admin',
 				READMEWP_URL . 'admin/css/admin.css',
-				[],
+				array(),
 				READMEWP_VERSION
 			);
 		}
@@ -101,7 +104,10 @@ class Viewer {
 			wp_die(
 				esc_html__( 'You do not have permission to view this README.', 'readmewp' ),
 				esc_html__( 'Access Denied', 'readmewp' ),
-				[ 'response' => 403, 'back_link' => true ]
+				array(
+					'response'  => 403,
+					'back_link' => true,
+				)
 			);
 		}
 		?>
@@ -110,12 +116,12 @@ class Viewer {
 			<h1 class="readmewp-viewer__title">
 				<?php echo esc_html( $readme->post_title ); ?>
 				<?php
-			// C-03: Only show Edit link when the user can actually edit this post
-			// (respects owner-lock — non-owning admins won't see the button on locked READMEs).
-			if ( current_user_can( 'edit_post', $readme->ID ) ) :
-			?>
+				// C-03: Only show Edit link when the user can actually edit this post
+				// (respects owner-lock — non-owning admins won't see the button on locked READMEs).
+				if ( current_user_can( 'edit_post', $readme->ID ) ) :
+					?>
 					<a href="<?php echo esc_url( admin_url( 'post.php?post=' . $readme->ID . '&action=edit' ) ); ?>"
-					   class="page-title-action readmewp-edit-link">
+						class="page-title-action readmewp-edit-link">
 						<?php esc_html_e( 'Edit', 'readmewp' ); ?>
 					</a>
 				<?php endif; ?>
@@ -131,7 +137,7 @@ class Viewer {
 				$post = $readme;
 				setup_postdata( $readme );
 
-				echo wp_kses_post( apply_filters( 'the_content', $readme->post_content ) );
+				echo wp_kses_post( apply_filters( 'the_content', $readme->post_content ) ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
 
 				wp_reset_postdata();
 				// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
