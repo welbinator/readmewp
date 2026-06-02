@@ -1,0 +1,121 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  phpunit:
+    name: PHPUnit Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        php: ['8.1', '8.2', '8.3']
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: wordpress_test
+          MYSQL_USER: wp
+          MYSQL_PASSWORD: wp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP ${{ matrix.php }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: mysqli, zip
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-interaction --prefer-dist
+        working-directory: .
+
+      - name: Download WordPress develop test library
+        run: |
+          mkdir -p /tmp/wordpress-tests-lib
+          curl -sL https://github.com/WordPress/wordpress-develop/archive/refs/heads/trunk.tar.gz \
+            -o /tmp/wp-develop.tar.gz
+          tar --strip-components=3 -xzf /tmp/wp-develop.tar.gz \
+            -C /tmp/wordpress-tests-lib \
+            "wordpress-develop-trunk/tests/phpunit/includes" \
+            "wordpress-develop-trunk/tests/phpunit/data"
+
+      - name: Download WordPress core (for ABSPATH)
+        run: |
+          curl -sL https://wordpress.org/latest.tar.gz -o /tmp/wordpress.tar.gz
+          mkdir -p /tmp/wordpress
+          tar --strip-components=1 -xzf /tmp/wordpress.tar.gz -C /tmp/wordpress
+
+      - name: Write wp-tests-config.php
+        run: |
+          cat > /tmp/wordpress-tests-lib/wp-tests-config.php <<'EOF'
+          <?php
+          define( 'DB_NAME',     'wordpress_test' );
+          define( 'DB_USER',     'wp' );
+          define( 'DB_PASSWORD', 'wp' );
+          define( 'DB_HOST',     '127.0.0.1' );
+          define( 'DB_CHARSET',  'utf8' );
+          define( 'DB_COLLATE',  '' );
+          $table_prefix = 'wptests_';
+          define( 'WP_DEBUG', true );
+          define( 'WP_TESTS_DOMAIN',    'example.org' );
+          define( 'WP_TESTS_EMAIL',     'admin@example.org' );
+          define( 'WP_TESTS_TITLE',     'Test Blog' );
+          define( 'WP_PHP_BINARY',      'php' );
+          define( 'WPLANG',             '' );
+          define( 'WP_TESTS_MULTISITE', false );
+          define( 'ABSPATH',            '/tmp/wordpress/' );
+          EOF
+
+      - name: Run PHPUnit
+        env:
+          WP_TESTS_DIR: /tmp/wordpress-tests-lib
+        run: ./vendor/bin/phpunit --no-coverage
+
+  phpcs:
+    name: PHP Code Sniffer (WordPress coding standards)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: cs2pr
+          coverage: none
+
+      - name: Install Composer dependencies (with phpcs)
+        run: |
+          composer require --dev \
+            squizlabs/php_codesniffer \
+            wp-coding-standards/wpcs \
+            dealerdirect/phpcodesniffer-composer-installer \
+            --no-interaction --prefer-dist
+
+      - name: Run PHPCS
+        run: |
+          ./vendor/bin/phpcs \
+            --standard=WordPress \
+            --extensions=php \
+            --ignore=vendor/,tests/ \
+            --report=checkstyle \
+            . | cs2pr
