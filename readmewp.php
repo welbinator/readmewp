@@ -23,10 +23,10 @@ namespace ReadMeWP;
 defined( 'ABSPATH' ) || exit;
 
 // Plugin constants.
-define( 'READMEWP_VERSION',  '0.1.0' );
-define( 'READMEWP_FILE',     __FILE__ );
-define( 'READMEWP_PATH',     plugin_dir_path( __FILE__ ) );
-define( 'READMEWP_URL',      plugin_dir_url( __FILE__ ) );
+define( 'READMEWP_VERSION', '0.1.0' );
+define( 'READMEWP_FILE', __FILE__ );
+define( 'READMEWP_PATH', plugin_dir_path( __FILE__ ) );
+define( 'READMEWP_URL', plugin_dir_url( __FILE__ ) );
 define( 'READMEWP_BASENAME', plugin_basename( __FILE__ ) );
 
 // Autoload classes.

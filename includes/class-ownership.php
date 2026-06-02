@@ -30,8 +30,8 @@ class Ownership {
 	 * Hook into WordPress.
 	 */
 	public function register(): void {
-		add_action( 'add_meta_boxes', [ $this, 'add_meta_box' ] );
-		add_action( 'save_post_' . Post_Type::SLUG, [ $this, 'save_meta' ], 10, 2 );
+		add_action( 'add_meta_boxes', array( $this, 'add_meta_box' ) );
+		add_action( 'save_post_' . Post_Type::SLUG, array( $this, 'save_meta' ), 10, 2 );
 	}
 
 	/**
@@ -41,7 +41,7 @@ class Ownership {
 		add_meta_box(
 			'readmewp_ownership',
 			__( 'Edit Access', 'readmewp' ),
-			[ $this, 'render_meta_box' ],
+			array( $this, 'render_meta_box' ),
 			Post_Type::SLUG,
 			'side',
 			'default'
@@ -59,8 +59,8 @@ class Ownership {
 		// If the meta has never been saved (new post), default to checked.
 		$meta_exists = metadata_exists( 'post', $post->ID, self::META_OWNER_ONLY );
 		$owner_only  = $meta_exists ? (bool) get_post_meta( $post->ID, self::META_OWNER_ONLY, true ) : true;
-		$owner_id   = (int) get_post_meta( $post->ID, self::META_OWNER_ID, true );
-		$owner      = $owner_id ? get_userdata( $owner_id ) : null;
+		$owner_id    = (int) get_post_meta( $post->ID, self::META_OWNER_ID, true );
+		$owner       = $owner_id ? get_userdata( $owner_id ) : null;
 		?>
 		<div class="readmewp-meta-box">
 
@@ -103,7 +103,7 @@ class Ownership {
 	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
 	 */
-	public function save_meta( int $post_id, \WP_Post $post ): void {
+	public function save_meta( int $post_id, \WP_Post $post ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Bail on autosave / revisions / missing nonce.
 		if (
 			wp_is_post_autosave( $post_id ) ||
@@ -118,7 +118,7 @@ class Ownership {
 		}
 
 		// A-01: Capability check — only the owner or an admin may change ownership meta.
-		if ( ! current_user_can( 'manage_options' ) && ! Ownership::is_owner( $post_id, get_current_user_id() ) ) {
+		if ( ! current_user_can( 'manage_options' ) && ! self::is_owner( $post_id, get_current_user_id() ) ) {
 			return;
 		}
 

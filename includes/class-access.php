@@ -62,7 +62,7 @@ class Access {
 	 * @param \WP_User $user    The user object.
 	 * @return bool[]
 	 */
-	public function grant_admin_caps( array $allcaps, array $caps, array $args, \WP_User $user ): array {
+	public function grant_admin_caps( array $allcaps, array $caps, array $args, \WP_User $user ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		if ( empty( $allcaps['manage_options'] ) ) {
 			return $allcaps;
 		}
@@ -86,7 +86,7 @@ class Access {
 	 * @param \WP_User $user    The user object.
 	 * @return bool[]
 	 */
-	public function filter_caps( array $allcaps, array $caps, array $args, \WP_User $user ): array {
+	public function filter_caps( array $allcaps, array $caps, array $args, \WP_User $user ): array { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		$requested = $args[0] ?? '';
 		$user_id   = (int) ( $args[1] ?? 0 );
 		$post_id   = isset( $args[2] ) && is_numeric( $args[2] ) ? (int) $args[2] : 0;

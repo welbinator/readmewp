@@ -148,7 +148,7 @@ class Permissions {
 	 * @param int      $post_id Post ID.
 	 * @param \WP_Post $post    Post object.
 	 */
-	public function save_meta( int $post_id, \WP_Post $post ): void {
+	public function save_meta( int $post_id, \WP_Post $post ): void { // phpcs:ignore Generic.CodeAnalysis.UnusedFunctionParameter.FoundAfterLastUsed
 		// Nonce check.
 		if (
 			! isset( $_POST['readmewp_nonce'] ) ||
