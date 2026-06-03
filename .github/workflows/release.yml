@@ -1,0 +1,77 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+
+      - name: Update plugin header version
+        run: |
+          sed -i "s/^ \* Version:.*/ * Version:           ${{ steps.version.outputs.VERSION }}/" readmewp.php
+          sed -i "s/define( 'READMEWP_VERSION', '[^']*' );/define( 'READMEWP_VERSION', '${{ steps.version.outputs.VERSION }}' );/" readmewp.php
+
+      - name: Build plugin zip
+        run: |
+          PLUGIN_SLUG="readmewp"
+          RELEASE_DIR="/tmp/${PLUGIN_SLUG}"
+          ZIP_NAME="${PLUGIN_SLUG}-${{ steps.version.outputs.VERSION }}.zip"
+
+          rsync -r \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='.gitignore' \
+            --exclude='vendor' \
+            --exclude='node_modules' \
+            --exclude='composer.json' \
+            --exclude='composer.lock' \
+            --exclude='phpcs.xml' \
+            --exclude='.phpcs.xml.dist' \
+            --exclude='phpstan.neon' \
+            --exclude='phpunit.xml.dist' \
+            --exclude='wp-tests-config.php' \
+            --exclude='tests' \
+            --exclude='bin' \
+            --exclude='.ddev' \
+            --exclude='*.sh' \
+            ./ "${RELEASE_DIR}/"
+
+          cd /tmp
+          zip -r "${ZIP_NAME}" "${PLUGIN_SLUG}/"
+          echo "ZIP_PATH=/tmp/${ZIP_NAME}" >> $GITHUB_ENV
+          echo "ZIP_NAME=${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Generate SHA-256 checksum
+        run: |
+          SHA256_NAME="${ZIP_NAME%.zip}.sha256"
+          sha256sum "${ZIP_PATH}" | awk '{print $1}' > "/tmp/${SHA256_NAME}"
+          echo "SHA256_PATH=/tmp/${SHA256_NAME}" >> $GITHUB_ENV
+          echo "SHA256_NAME=${SHA256_NAME}" >> $GITHUB_ENV
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "ReadMeWP v${{ steps.version.outputs.VERSION }}"
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-rc') || contains(github.ref_name, '-alpha') }}
+          generate_release_notes: true
+          files: |
+            ${{ env.ZIP_PATH }}
+            ${{ env.SHA256_PATH }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
